@@ -1,60 +1,67 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Leitor de QR Code com Firebase</title>
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-      import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Leitor de QR Code</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+    import QrScanner from "https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js";
 
-      const firebaseConfig = {
-        apiKey: "AIzaSyDJqt0KnBQyO2v_MvDQfz1BtmfMYP0vmJY",
-        authDomain: "teste-5afef.firebaseapp.com",
-        projectId: "teste-5afef",
-        storageBucket: "teste-5afef.firebasestorage.app",
-        messagingSenderId: "605208520383",
-        appId: "1:605208520383:web:a0dd81ab47dcaf2a01080a"
-      };
+    // Configuração do Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJqt0KnBQyO2v_MvDQfz1BtmfMYP0vmJY",
+      authDomain: "teste-5afef.firebaseapp.com",
+      projectId: "teste-5afef",
+      storageBucket: "teste-5afef.firebasestorage.app",
+      messagingSenderId: "605208520383",
+      appId: "1:605208520383:web:a0dd81ab47dcaf2a01080a"
+    };
 
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth();
 
-      async function salvarQRCode(dado) {
+    // Login anônimo
+    signInAnonymously(auth)
+      .then(() => {
+        console.log("Usuário autenticado anonimamente");
+        iniciarLeitor();
+      })
+      .catch((error) => {
+        console.error("Erro ao autenticar anonimamente:", error);
+      });
+
+    // Função principal após autenticar
+    function iniciarLeitor() {
+      const videoElem = document.getElementById('video');
+      const resultElem = document.getElementById('result');
+
+      const qrScanner = new QrScanner(videoElem, async result => {
+        console.log("QR lido:", result);
+        resultElem.textContent = "QR lido: " + result;
+
         try {
-          const docRef = await addDoc(collection(db, "estoque"), {
-            codigo: dado,
-            data: new Date()
+          await addDoc(collection(db, "estoque"), {
+            codigo: result,
+            data: serverTimestamp()
           });
-          alert("QR Code salvo com sucesso!");
-          console.log("ID do doc:", docRef.id);
+          console.log("QR salvo no Firebase com sucesso!");
         } catch (e) {
-          console.error("Erro ao salvar:", e);
+          console.error("Erro ao salvar no Firebase:", e);
         }
-      }
 
-      window.salvarQRCode = salvarQRCode;
-    </script>
+        qrScanner.stop();
+      });
 
-    <script src="https://unpkg.com/html5-qrcode"></script>
-  </head>
-  <body>
-    <h1>Escaneie o QR Code</h1>
-    <div id="reader" style="width: 300px;"></div>
-    <p id="resultado"></p>
-
-    <script>
-      function onScanSuccess(decodedText, decodedResult) {
-        document.getElementById("resultado").innerText = `QR lido: ${decodedText}`;
-        salvarQRCode(decodedText);
-        html5QrcodeScanner.clear(); // parar o scanner após leitura
-      }
-
-      let html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: 250 },
-        false
-      );
-      html5QrcodeScanner.render(onScanSuccess);
-    </script>
-  </body>
+      qrScanner.start();
+    }
+  </script>
+</head>
+<body style="text-align: center; background-color: #121212; color: white; font-family: Arial, sans-serif; padding-top: 50px;">
+  <h1>📷 Leitor de QR Code</h1>
+  <video id="video" style="width: 320px; height: auto; border-radius: 10px; border: 2px solid white;"></video>
+  <p id="result" style="margin-top: 20px;">Aponte para um QR Code</p>
+</body>
 </html>
-
