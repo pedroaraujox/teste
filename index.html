@@ -1,48 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-  <title>Leitor de QR Code</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    #reader {
-      width: 300px;
-      margin: auto;
-      padding-top: 20px;
+  <meta charset="UTF-8">
+  <title>Sistema de Estoque - Firebase</title>
+  <script type="module">
+    // Importa os módulos do Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+
+    // Configuração do Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJqt0KnBQyO2v_MvDQfz1BtmfMYP0vmJY",
+      authDomain: "teste-5afef.firebaseapp.com",
+      projectId: "teste-5afef",
+      storageBucket: "teste-5afef.firebasestorage.app",
+      messagingSenderId: "605208520383",
+      appId: "1:605208520383:web:a0dd81ab47dcaf2a01080a"
+    };
+
+    // Inicializa o Firebase e o Firestore
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Função para salvar item no Firestore
+    async function salvarItem() {
+      const nome = document.getElementById("nome").value;
+      const codigo = document.getElementById("codigo").value;
+
+      try {
+        const docRef = await addDoc(collection(db, "estoque"), {
+          nome: nome,
+          codigo: codigo,
+          dataCadastro: new Date()
+        });
+        alert("Item cadastrado com sucesso! ID: " + docRef.id);
+      } catch (e) {
+        alert("Erro ao cadastrar item: " + e);
+      }
     }
-    #result {
-      text-align: center;
-      font-size: 18px;
-      margin-top: 20px;
-    }
-  </style>
+
+    // Deixa disponível no botão
+    window.salvarItem = salvarItem;
+  </script>
 </head>
 <body>
-  <h2 style="text-align: center;">Leitor de QR Code</h2>
-  <div id="reader"></div>
-  <div id="result">Aguardando leitura...</div>
+  <h1>Cadastro de Materiais</h1>
 
-  <script>
-    const resultContainer = document.getElementById('result');
-    const html5QrCode = new Html5Qrcode("reader");
+  <label for="nome">Nome do item:</label><br>
+  <input type="text" id="nome" placeholder="Ex: Notebook Dell"><br><br>
 
-    function onScanSuccess(decodedText, decodedResult) {
-      // Exibe o resultado na tela
-      resultContainer.innerText = `QR Lido: ${decodedText}`;
+  <label for="codigo">Código de barras (ou QR):</label><br>
+  <input type="text" id="codigo" placeholder="Ex: 1234567890"><br><br>
 
-      // Para o scanner após a leitura (pode remover essa linha se quiser continuar lendo)
-      html5QrCode.stop();
-    }
-
-    html5QrCode.start(
-      { facingMode: "environment" }, // Usa a câmera traseira
-      {
-        fps: 10,
-        qrbox: 250
-      },
-      onScanSuccess
-    ).catch(err => {
-      resultContainer.innerText = `Erro ao iniciar câmera: ${err}`;
-    });
-  </script>
+  <button onclick="salvarItem()">Cadastrar no estoque</button>
 </body>
 </html>
+
